@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 10px; background: #fafbfc; color: #172b4d; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .btn-sheet { background: #e3fcef; color: #006644; border: 1px solid #abf5d1; padding: 4px 10px; border-radius: 3px; text-decoration: none; font-size: 12px; font-weight: 600; }
+    .table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dfe1e6; font-size: 12px; }
+    .table th, .table td { padding: 6px 8px; border-bottom: 1px solid #ebecf0; text-align: left; }
+    .table th { background: #f4f5f7; color: #5e6c84; }
+    .status-select { font-size: 11px; font-weight: 600; border-radius: 10px; padding: 2px 6px; border: 1px solid #dfe1e6; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <strong id="tabLabel">Tab: Loading...</strong>
+    <a class="btn-sheet" id="sheetLink" target="_blank" href="https://docs.google.com/spreadsheets/d/1rYwDNczgDut2Wcf-42tmcBHlFjo4HN4vHexmEDJ1QSY/edit">📊 Open Tab in Google Sheets ↗</a>
+  </div>
+  <table class="table">
+    <thead>
+      <tr><th>ID</th><th>Status</th><th>Name</th><th>Assignee</th><th>Details</th><th>Link</th></tr>
+    </thead>
+    <tbody id="bugRows"></tbody>
+  </table>
+
+  <script>
+    var t = window.TrelloPowerUp.iframe();
+    var APPS_SCRIPT_URL = 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE';
+    var bugs = [];
+    var currentCard = null;
+
+    t.render(function() {
+      return t.card('id', 'name', 'attachments').then(function(card) {
+        currentCard = card;
+        document.getElementById('tabLabel').textContent = 'Linked Tab: ' + card.name;
+
+        var sheetAtt = (card.attachments || []).find(a => a.url && a.url.includes('docs.google.com/spreadsheets'));
+        if (sheetAtt) document.getElementById('sheetLink').href = sheetAtt.url;
+
+        if (APPS_SCRIPT_URL && !APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
+          fetch(APPS_SCRIPT_URL + '?action=getBugs&cardName=' + encodeURIComponent(card.name))
+            .then(r => r.json())
+            .then(data => {
+              bugs = data.bugs || [];
+              if (data.sheetUrl) document.getElementById('sheetLink').href = data.sheetUrl;
+              render();
+            });
+        }
+      });
+    });
+
+    function render() {
+      var tbody = document.getElementById('bugRows');
+      tbody.innerHTML = '';
+      bugs.forEach((b, idx) => {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${b.id}</strong></td>
+          <td>
+            <select class="status-select" onchange="updateStatus(${idx}, this.value)">
+              <option value="Open" ${b.status === 'Open' ? 'selected' : ''}>Open</option>
+              <option value="In Progress" ${b.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Closed" ${b.status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+          </td>
+          <td>${b.name}</td>
+          <td>${b.assignedTo || '-'}</td>
+          <td>${b.details || '-'}</td>
+          <td>${b.attachments ? `<a href="${b.attachments}" target="_blank">📎</a>` : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      t.sizeTo('table');
+    }
+
+    function updateStatus(idx, val) {
+      bugs[idx].status = val;
+      if (APPS_SCRIPT_URL) {
+        fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ action: 'updateBug', cardName: currentCard.name, rowIndex: bugs[idx].rowIndex, status: val })
+        });
+      }
+    }
+  </script>
+</body>
+</html>
