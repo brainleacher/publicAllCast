@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+</head>
+<body>
+  <script>
+    window.TrelloPowerUp.initialize({
+      'card-back-section': function(t) {
+        return {
+          title: '🐞 Bug Tracker (Google Sheets Sync)',
+          icon: 'https://cdn-icons-png.flaticon.com/512/281/281761.png',
+          content: {
+            type: 'iframe',
+            url: t.signUrl('./card_back_section.html'),
+            height: 480
+          }
+        };
+      },
+      'card-buttons': function(t) {
+        return [{
+          icon: 'https://cdn-icons-png.flaticon.com/512/281/281761.png',
+          text: 'Open Sheet Tab',
+          callback: function(t) {
+            return t.card('attachments').then(function(card) {
+              var sheet = (card.attachments || []).find(a => a.url && a.url.includes('docs.google.com/spreadsheets'));
+              window.open(sheet ? sheet.url : 'https://docs.google.com/spreadsheets/d/1rYwDNczgDut2Wcf-42tmcBHlFjo4HN4vHexmEDJ1QSY/edit', '_blank');
+            });
+          }
+        }];
+      }
+    });
+  </script>
+</body>
+</html>
