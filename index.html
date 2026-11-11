@@ -194,9 +194,23 @@
       border: 1px solid #dfe1e6;
       border-radius: 4px;
     }
+    .warning-banner {
+      display: none;
+      background: #fffae6;
+      border: 1px solid #ffab00;
+      color: #172b4d;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
+
+  <div id="oldScriptWarning" class="warning-banner">
+    <strong>Action Needed in Google Sheets:</strong> Your Apps Script Web App is still running the old <code>Code.gs</code> (which returned <code>BugTracker_Template</code>). Paste the updated <code>Code.gs</code> into <strong>Extensions &gt; Apps Script</strong>, then click <strong>Deploy &gt; Manage deployments &gt; Edit (pencil icon) &gt; Version: New version &gt; Deploy</strong>.
+  </div>
 
   <div class="header-bar">
     <div class="title-area">
@@ -256,57 +270,74 @@
   </div>
 
   <script>
-    var APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyay2H5NbY2mcKcQSpu6KchE2rrSl2u0MeqqH8xI73kdX1PFGzpbxIsgep7EVDr6XCc/exec';
+    var APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxiXwIopV6txa6af6-N2etejGuJ-SKe7xkiZPu_q9AVDIQY3JP23j9X3-T_kUM6FVGq/exec';
     var SPREADSHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/1rYwDNczgDut2Wcf-42tmcBHlFjo4HN4vHexmEDJ1QSY/edit';
     var ICON_URL = 'https://cdn-icons-png.flaticon.com/512/281/281761.png';
+
+    function sanitizeName(name) {
+      return String(name || '')
+        .replace(/[:\\/?*\[\]]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 95);
+    }
+
+    /**
+     * Calls Apps Script to dynamically create or fetch the dedicated tab for this card.
+     * Rejects any stale cache pointing to BugTracker_Template.
+     */
+    function syncCardTabWithSheet(t, forceRefresh) {
+      return Promise.all([
+        t.get('card', 'shared'),
+        t.card('id', 'name', 'url')
+      ]).then(function(results) {
+        var shared = results[0] || {};
+        var card = results[1];
+        var expectedTab = sanitizeName(card.name);
+
+        if (
+          !forceRefresh &&
+          shared.sheetUrl &&
+          shared.sheetUrl.indexOf('#gid=') > -1 &&
+          shared.sheetName === expectedTab &&
+          shared.sheetName !== 'BugTracker_Template'
+        ) {
+          return shared;
+        }
+
+        var query = '?action=getBugs'
+          + '&cardName=' + encodeURIComponent(card.name)
+          + '&cardId=' + encodeURIComponent(card.id)
+          + '&cardUrl=' + encodeURIComponent(card.url || '')
+          + '&_ts=' + Date.now();
+
+        return fetch(APPS_SCRIPT_WEB_APP_URL + query)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.sheetUrl) {
+              var info = {
+                sheetUrl: data.sheetUrl,
+                sheetName: data.sheetName || expectedTab,
+                bugCount: (data.bugs || []).length,
+                version: data.version || ''
+              };
+              if (info.sheetName !== 'BugTracker_Template') {
+                t.set('card', 'shared', info);
+              }
+              return info;
+            }
+            return { sheetUrl: SPREADSHEET_BASE_URL, sheetName: expectedTab, bugCount: 0 };
+          })
+          .catch(function() {
+            return { sheetUrl: SPREADSHEET_BASE_URL, sheetName: expectedTab, bugCount: 0 };
+          });
+      });
+    }
 
     var isCardBack = window.location.search.indexOf('view=card-back') !== -1;
 
     if (!isCardBack) {
       // 1. Trello Power-Up Connector Mode
-      function resolveCardTabUrl(t) {
-        return Promise.all([
-          t.get('card', 'shared', 'sheetUrl'),
-          t.card('id', 'name', 'shortLink', 'url', 'attachments')
-        ]).then(function(results) {
-          var savedUrl = results[0];
-          var card = results[1];
-
-          if (savedUrl && savedUrl.indexOf('#gid=') > -1) {
-            return savedUrl;
-          }
-
-          var gidAttachment = (card.attachments || []).find(function(a) {
-            return a.url && a.url.indexOf('docs.google.com/spreadsheets') > -1 && a.url.indexOf('#gid=') > -1;
-          });
-          if (gidAttachment) {
-            return gidAttachment.url;
-          }
-
-          var query = '?action=getBugs'
-            + '&cardName=' + encodeURIComponent(card.name)
-            + '&cardId=' + encodeURIComponent(card.id)
-            + '&cardUrl=' + encodeURIComponent(card.url || '');
-
-          return fetch(APPS_SCRIPT_WEB_APP_URL + query)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (data && data.sheetUrl) {
-                t.set('card', 'shared', {
-                  sheetUrl: data.sheetUrl,
-                  sheetName: data.sheetName,
-                  bugCount: (data.bugs || []).length
-                });
-                return data.sheetUrl;
-              }
-              return SPREADSHEET_BASE_URL;
-            })
-            .catch(function() {
-              return SPREADSHEET_BASE_URL;
-            });
-        });
-      }
-
       window.TrelloPowerUp.initialize({
         'card-back-section': function(t) {
           return {
@@ -324,24 +355,20 @@
             icon: ICON_URL,
             text: 'Open Card Tab in Sheets',
             callback: function(t) {
-              return resolveCardTabUrl(t).then(function(tabUrl) {
-                window.open(tabUrl, '_blank');
+              return syncCardTabWithSheet(t, true).then(function(info) {
+                window.open(info.sheetUrl || SPREADSHEET_BASE_URL, '_blank');
               });
             }
           }];
         },
         'card-badges': function(t) {
-          return Promise.all([
-            t.get('card', 'shared', 'sheetName'),
-            t.get('card', 'shared', 'bugCount'),
-            t.card('name')
-          ]).then(function(res) {
-            var tabName = res[0] || res[2].name;
-            var bugCount = res[1];
-            var badgeText = bugCount !== undefined ? ('Bugs: ' + bugCount + ' (' + tabName + ')') : ('Tab: ' + tabName);
+          // Automatically triggers tab creation in Google Sheets for every existing & newly created card on the board!
+          return syncCardTabWithSheet(t, false).then(function(info) {
+            var tabName = info.sheetName || 'Syncing...';
+            var count = info.bugCount !== undefined ? info.bugCount : 0;
             return [{
               icon: ICON_URL,
-              text: badgeText,
+              text: 'Tab: ' + tabName + ' (' + count + ')',
               color: 'green'
             }];
           });
@@ -356,7 +383,7 @@
       var directTabUrl = SPREADSHEET_BASE_URL;
 
       t.render(function() {
-        return t.card('id', 'name', 'url', 'shortLink', 'attachments').then(function(card) {
+        return t.card('id', 'name', 'url', 'shortLink').then(function(card) {
           currentCard = card;
           document.getElementById('tabNameBadge').textContent = 'Tab: ' + card.name;
           loadCardTabBugs();
@@ -370,7 +397,8 @@
           + '?action=getBugs'
           + '&cardName=' + encodeURIComponent(currentCard.name)
           + '&cardId=' + encodeURIComponent(currentCard.id)
-          + '&cardUrl=' + encodeURIComponent(currentCard.url || '');
+          + '&cardUrl=' + encodeURIComponent(currentCard.url || '')
+          + '&_ts=' + Date.now();
 
         fetch(url)
           .then(function(res) { return res.json(); })
@@ -381,14 +409,23 @@
                 directTabUrl = data.sheetUrl;
                 document.getElementById('btnOpenSheet').href = directTabUrl;
               }
-              document.getElementById('tabNameBadge').textContent = 'Tab: ' + (data.sheetName || currentCard.name);
-              document.getElementById('syncStatus').textContent = 'Synced (' + bugsData.length + ' issues)';
 
-              t.set('card', 'shared', {
-                sheetUrl: directTabUrl,
-                sheetName: data.sheetName || currentCard.name,
-                bugCount: bugsData.length
-              });
+              // Detect if the user's Apps Script Web App is still running the old v1 script
+              if (!data.version && (!data.sheetName || data.sheetName === 'BugTracker_Template')) {
+                document.getElementById('oldScriptWarning').style.display = 'block';
+                document.getElementById('syncStatus').textContent = 'Apps Script needs New Version deployment';
+              } else {
+                document.getElementById('oldScriptWarning').style.display = 'none';
+                document.getElementById('tabNameBadge').textContent = 'Tab: ' + (data.sheetName || currentCard.name);
+                document.getElementById('syncStatus').textContent = 'Synced (' + bugsData.length + ' issues)';
+
+                t.set('card', 'shared', {
+                  sheetUrl: directTabUrl,
+                  sheetName: data.sheetName || currentCard.name,
+                  bugCount: bugsData.length,
+                  version: data.version || 'v2'
+                });
+              }
             } else {
               document.getElementById('syncStatus').textContent = 'Error: ' + (data.message || 'Unknown');
             }
@@ -558,7 +595,8 @@
               t.set('card', 'shared', {
                 sheetUrl: directTabUrl,
                 sheetName: data.sheetName || currentCard.name,
-                bugCount: bugsData.length
+                bugCount: bugsData.length,
+                version: data.version || 'v2'
               });
               renderBugs();
             }
