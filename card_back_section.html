@@ -1,108 +1,535 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>AllCast OS - Trello Power-Up Connector</title>
+  <meta charset="UTF-8">
+  <title>AllCast OS Card Bug Tracker</title>
+  <link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 10px;
+      color: #172b4d;
+      background: #fafbfc;
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #dfe1e6;
+    }
+    .title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab-badge {
+      background: #deebff;
+      color: #0747a6;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .sync-status {
+      font-size: 11px;
+      color: #5e6c84;
+    }
+    .actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid transparent;
+      margin: 0;
+    }
+    .btn-primary {
+      background: #0052cc;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #0065ff;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #ebecf0;
+      color: #172b4d;
+    }
+    .btn-secondary:hover {
+      background: #dfe1e6;
+    }
+    .btn-sheet {
+      background: #e3fcef;
+      color: #006644;
+      border-color: #abf5d1;
+    }
+    .btn-sheet:hover {
+      background: #abf5d1;
+      color: #006644;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+    }
+    .bug-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .bug-table th {
+      background: #f4f5f7;
+      text-align: left;
+      padding: 7px 8px;
+      font-weight: 600;
+      color: #5e6c84;
+      border-bottom: 1px solid #dfe1e6;
+      white-space: nowrap;
+    }
+    .bug-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #ebecf0;
+      vertical-align: middle;
+    }
+    .bug-table tr:hover {
+      background: #f8f9fa;
+    }
+    .id-tag {
+      font-family: monospace;
+      font-weight: 700;
+      color: #0052cc;
+      white-space: nowrap;
+    }
+    .status-select {
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 2px 6px;
+      border: 1px solid #dfe1e6;
+      cursor: pointer;
+    }
+    .status-Open { background: #ffebe6; color: #bf2600; }
+    .status-In-Progress { background: #fffae6; color: #ff8b00; }
+    .status-Closed { background: #e3fcef; color: #006644; }
+    .cell-input {
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 3px 5px;
+      font-size: 12px;
+      color: #172b4d;
+      border-radius: 3px;
+      box-sizing: border-box;
+    }
+    .cell-input:hover {
+      border-color: #dfe1e6;
+      background: #fff;
+    }
+    .cell-input:focus {
+      border-color: #4c9aff;
+      background: #fff;
+      outline: none;
+    }
+    .att-cell {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .att-link {
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .add-form {
+      display: none;
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 90px 110px 1fr 140px;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .add-form input, .add-form select {
+      width: 100%;
+      padding: 5px 7px;
+      font-size: 12px;
+      border: 1px solid #dfe1e6;
+      border-radius: 3px;
+      box-sizing: border-box;
+      margin: 0;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 22px 12px;
+      color: #5e6c84;
+      font-size: 12px;
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 4px;
+    }
+    .config-banner {
+      display: none;
+      background: #fffae6;
+      border: 1px solid #ffe380;
+      color: #172b4d;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+  </style>
 </head>
 <body>
+
+  <div id="configBanner" class="config-banner">
+    ⚠️ <strong>Setup Needed:</strong> Paste your deployed Google Apps Script Web App URL into <code>APPS_SCRIPT_WEB_APP_URL</code> in <code>card_back_section.html</code> and <code>index.html</code> to enable live per-card tab creation and two-way sync.
+  </div>
+
+  <div class="header-bar">
+    <div class="title-area">
+      <span class="tab-badge" id="tabNameBadge">📑 Tab: Loading...</span>
+      <span class="sync-status" id="syncStatus">Connecting to Google Sheets...</span>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="btnRefresh" title="Reload from Google Sheet tab">🔄 Refresh</button>
+      <button class="btn btn-primary" id="btnToggleAdd">+ Add Bug</button>
+      <a class="btn btn-sheet" id="btnOpenSheet" target="_blank" href="https://docs.google.com/spreadsheets/d/1rYwDNczgDut2Wcf-42tmcBHlFjo4HN4vHexmEDJ1QSY/edit">
+        📊 Open Tab in Google Sheets ↗
+      </a>
+    </div>
+  </div>
+
+  <!-- Add New Bug Row Form -->
+  <div class="add-form" id="addBugForm">
+    <div style="font-weight: 600; font-size: 12px; margin-bottom: 6px;">Add Issue to This Card's Tab</div>
+    <div class="form-grid">
+      <input type="text" id="newBugId" placeholder="ID (Auto)">
+      <select id="newBugStatus">
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Closed">Closed</option>
+      </select>
+      <input type="text" id="newBugName" placeholder="Bug Name / Summary *" required>
+      <input type="text" id="newBugAssignee" placeholder="Assigned To">
+    </div>
+    <div class="form-grid-2">
+      <input type="text" id="newBugDetails" placeholder="Details / Steps to reproduce">
+      <input type="text" id="newBugAttachments" placeholder="Attachment URL (Image / Log link)">
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+      <button class="btn btn-secondary" id="btnCancelAdd">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveNewBug">Save to Tab</button>
+    </div>
+  </div>
+
+  <!-- Live Columns Table for this Card's Sheet Tab -->
+  <div class="table-wrap" id="tableWrap">
+    <table class="bug-table" id="bugsTable">
+      <thead>
+        <tr>
+          <th style="width: 72px;">ID</th>
+          <th style="width: 105px;">Status</th>
+          <th style="min-width: 150px;">Name</th>
+          <th style="width: 130px;">Assigned To</th>
+          <th style="min-width: 170px;">Details</th>
+          <th style="width: 140px;">Attachments</th>
+        </tr>
+      </thead>
+      <tbody id="bugsTableBody"></tbody>
+    </table>
+  </div>
+
+  <div id="emptyMessage" class="empty-state" style="display: none;">
+    This card's dedicated Google Sheet tab is ready and currently has 0 issues.<br>
+    Click <strong>+ Add Bug</strong> above or <strong>Open Tab in Google Sheets ↗</strong> to add rows.
+  </div>
+
   <script>
-    // Paste your deployed Google Apps Script Web App URL (/exec) below:
-    var APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyay2H5NbY2mcKcQSpu6KchE2rrSl2u0MeqqH8xI73kdX1PFGzpbxIsgep7EVDr6XCc/exec';
+    var t = window.TrelloPowerUp.iframe();
+
+    // IMPORTANT: Paste your deployed Google Apps Script Web App URL (/exec) here:
+    var APPS_SCRIPT_WEB_APP_URL = 'PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE';
     var SPREADSHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/1rYwDNczgDut2Wcf-42tmcBHlFjo4HN4vHexmEDJ1QSY/edit';
-    var ICON_URL = 'https://cdn-icons-png.flaticon.com/512/281/281761.png';
 
-    /**
-     * Resolves the exact Google Sheet tab URL (#gid=...) for the given Trello card.
-     * Checks Power-Up shared card storage first, then card attachments with #gid=,
-     * and finally queries the Apps Script endpoint to dynamically create/fetch the tab.
-     */
-    function resolveCardTabUrl(t) {
-      return Promise.all([
-        t.get('card', 'shared', 'sheetUrl'),
-        t.card('id', 'name', 'shortLink', 'url', 'attachments')
-      ]).then(function(results) {
-        var savedUrl = results[0];
-        var card = results[1];
+    var currentCard = null;
+    var bugsData = [];
+    var directTabUrl = SPREADSHEET_BASE_URL;
 
-        if (savedUrl && savedUrl.indexOf('#gid=') > -1) {
-          return savedUrl;
-        }
-
-        var gidAttachment = (card.attachments || []).find(function(a) {
-          return a.url && a.url.indexOf('docs.google.com/spreadsheets') > -1 && a.url.indexOf('#gid=') > -1;
-        });
-        if (gidAttachment) {
-          return gidAttachment.url;
-        }
-
-        if (APPS_SCRIPT_WEB_APP_URL && APPS_SCRIPT_WEB_APP_URL.indexOf('PASTE_') === -1) {
-          var query = '?action=getBugs'
-            + '&cardName=' + encodeURIComponent(card.name)
-            + '&cardId=' + encodeURIComponent(card.id)
-            + '&cardUrl=' + encodeURIComponent(card.url || '');
-          return fetch(APPS_SCRIPT_WEB_APP_URL + query)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (data && data.sheetUrl) {
-                t.set('card', 'shared', {
-                  sheetUrl: data.sheetUrl,
-                  sheetName: data.sheetName,
-                  bugCount: (data.bugs || []).length
-                });
-                return data.sheetUrl;
-              }
-              return SPREADSHEET_BASE_URL;
-            })
-            .catch(function() {
-              return SPREADSHEET_BASE_URL;
-            });
-        }
-
-        return SPREADSHEET_BASE_URL;
+    t.render(function() {
+      return t.card('id', 'name', 'url', 'shortLink', 'attachments').then(function(card) {
+        currentCard = card;
+        document.getElementById('tabNameBadge').textContent = '📑 Tab: ' + card.name;
+        loadCardTabBugs();
       });
+    });
+
+    function isConfigured() {
+      return APPS_SCRIPT_WEB_APP_URL && APPS_SCRIPT_WEB_APP_URL.indexOf('PASTE_') === -1;
     }
 
-    window.TrelloPowerUp.initialize({
-      'card-back-section': function(t, options) {
-        return {
-          title: '🐞 Linked Tab Bug List (Google Sheets)',
-          icon: ICON_URL,
-          content: {
-            type: 'iframe',
-            url: t.signUrl('./card_back_section.html'),
-            height: 460
-          }
-        };
-      },
-      'card-buttons': function(t, options) {
-        return [{
-          icon: ICON_URL,
-          text: 'Open Card Tab in Sheets',
-          callback: function(t) {
-            return resolveCardTabUrl(t).then(function(tabUrl) {
-              window.open(tabUrl, '_blank');
-            });
-          }
-        }];
-      },
-      'card-badges': function(t, options) {
-        return Promise.all([
-          t.get('card', 'shared', 'sheetName'),
-          t.get('card', 'shared', 'bugCount'),
-          t.card('name')
-        ]).then(function(res) {
-          var tabName = res[0] || res[2].name;
-          var bugCount = res[1];
-          var badgeText = bugCount !== undefined ? ('Bugs: ' + bugCount + ' (' + tabName + ')') : ('Tab: ' + tabName);
-          return [{
-            icon: ICON_URL,
-            text: badgeText,
-            color: 'green'
-          }];
-        });
+    /**
+     * Calls Apps Script doGet, which automatically creates the sheet tab matching
+     * currentCard.name if it doesn't exist yet, and returns its exact #gid URL + rows.
+     */
+    function loadCardTabBugs() {
+      if (!isConfigured()) {
+        document.getElementById('configBanner').style.display = 'block';
+        document.getElementById('syncStatus').textContent = 'Waiting for Web App URL configuration';
+        renderBugs();
+        return;
       }
+
+      document.getElementById('configBanner').style.display = 'none';
+      document.getElementById('syncStatus').textContent = 'Syncing tab...';
+
+      var url = APPS_SCRIPT_WEB_APP_URL
+        + '?action=getBugs'
+        + '&cardName=' + encodeURIComponent(currentCard.name)
+        + '&cardId=' + encodeURIComponent(currentCard.id)
+        + '&cardUrl=' + encodeURIComponent(currentCard.url || '');
+
+      fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.status === 'success') {
+            bugsData = data.bugs || [];
+            if (data.sheetUrl) {
+              directTabUrl = data.sheetUrl;
+              document.getElementById('btnOpenSheet').href = directTabUrl;
+            }
+            document.getElementById('tabNameBadge').textContent = '📑 Tab: ' + (data.sheetName || currentCard.name);
+            document.getElementById('syncStatus').textContent = 'Synced (' + bugsData.length + ' issues)';
+
+            // Persist the exact #gid tab URL and count on the Trello card so the Card Button & Badge use it immediately
+            t.set('card', 'shared', {
+              sheetUrl: directTabUrl,
+              sheetName: data.sheetName || currentCard.name,
+              bugCount: bugsData.length
+            });
+          } else {
+            document.getElementById('syncStatus').textContent = 'Error: ' + (data.message || 'Unknown');
+          }
+          renderBugs();
+        })
+        .catch(function(err) {
+          document.getElementById('syncStatus').textContent = 'Connection error';
+          console.error(err);
+          renderBugs();
+        });
+    }
+
+    function renderBugs() {
+      var tbody = document.getElementById('bugsTableBody');
+      tbody.innerHTML = '';
+
+      if (!bugsData || bugsData.length === 0) {
+        document.getElementById('tableWrap').style.display = 'none';
+        document.getElementById('emptyMessage').style.display = 'block';
+        t.sizeTo(document.body);
+        return;
+      }
+
+      document.getElementById('emptyMessage').style.display = 'none';
+      document.getElementById('tableWrap').style.display = 'block';
+
+      bugsData.forEach(function(bug, idx) {
+        var tr = document.createElement('tr');
+        var statusClass = 'status-' + String(bug.status || 'Open').replace(/\s+/g, '-');
+
+        tr.innerHTML = ''
+          + '<td><span class="id-tag">' + escapeHtml(bug.id) + '</span></td>'
+          + '<td>'
+          + '  <select class="status-select ' + statusClass + '" data-idx="' + idx + '" data-field="status">'
+          + '    <option value="Open" ' + (bug.status === 'Open' ? 'selected' : '') + '>Open</option>'
+          + '    <option value="In Progress" ' + (bug.status === 'In Progress' ? 'selected' : '') + '>In Progress</option>'
+          + '    <option value="Closed" ' + (bug.status === 'Closed' ? 'selected' : '') + '>Closed</option>'
+          + '  </select>'
+          + '</td>'
+          + '<td><input class="cell-input" type="text" data-idx="' + idx + '" data-field="name" value="' + escapeHtml(bug.name) + '" placeholder="Bug name"></td>'
+          + '<td><input class="cell-input" type="text" data-idx="' + idx + '" data-field="assignedTo" value="' + escapeHtml(bug.assignedTo) + '" placeholder="Unassigned"></td>'
+          + '<td><input class="cell-input" type="text" data-idx="' + idx + '" data-field="details" value="' + escapeHtml(bug.details) + '" placeholder="Details"></td>'
+          + '<td>'
+          + '  <div class="att-cell">'
+          + '    <input class="cell-input" type="text" data-idx="' + idx + '" data-field="attachments" value="' + escapeHtml(bug.attachments) + '" placeholder="Paste URL">'
+          +      (bug.attachments ? '<a class="att-link" href="' + escapeHtml(bug.attachments) + '" target="_blank" title="Open Attachment">📎</a>' : '')
+          + '  </div>'
+          + '</td>';
+
+        tbody.appendChild(tr);
+      });
+
+      // Bind inline edit events for all columns
+      var selects = tbody.querySelectorAll('select.status-select');
+      selects.forEach(function(sel) {
+        sel.addEventListener('change', function(e) {
+          var i = Number(e.target.getAttribute('data-idx'));
+          updateBugField(i, 'status', e.target.value);
+        });
+      });
+
+      var inputs = tbody.querySelectorAll('input.cell-input');
+      inputs.forEach(function(inp) {
+        inp.addEventListener('change', function(e) {
+          var i = Number(e.target.getAttribute('data-idx'));
+          var field = e.target.getAttribute('data-field');
+          updateBugField(i, field, e.target.value);
+        });
+      });
+
+      t.sizeTo(document.body);
+    }
+
+    /**
+     * Syncs any edited column value back to this card's Google Sheet tab
+     */
+    function updateBugField(index, field, newValue) {
+      var bug = bugsData[index];
+      if (!bug) return;
+      bug[field] = newValue;
+      renderBugs();
+
+      if (!isConfigured()) return;
+      document.getElementById('syncStatus').textContent = 'Saving ' + bug.id + '...';
+
+      var payload = {
+        action: 'updateBug',
+        cardName: currentCard.name,
+        cardId: currentCard.id,
+        rowIndex: bug.rowIndex,
+        id: bug.id,
+        status: bug.status,
+        name: bug.name,
+        assignedTo: bug.assignedTo,
+        details: bug.details,
+        attachments: bug.attachments
+      };
+
+      // Use text/plain to avoid CORS preflight block in Google Apps Script
+      fetch(APPS_SCRIPT_WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'success') {
+            bugsData = data.bugs || bugsData;
+            document.getElementById('syncStatus').textContent = 'Saved (' + bugsData.length + ' issues)';
+            renderBugs();
+          }
+        })
+        .catch(function() {
+          document.getElementById('syncStatus').textContent = 'Saved';
+        });
+    }
+
+    // UI Controls
+    document.getElementById('btnRefresh').addEventListener('click', function() {
+      loadCardTabBugs();
     });
+
+    document.getElementById('btnToggleAdd').addEventListener('click', function() {
+      var form = document.getElementById('addBugForm');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+      t.sizeTo(document.body);
+    });
+
+    document.getElementById('btnCancelAdd').addEventListener('click', function() {
+      document.getElementById('addBugForm').style.display = 'none';
+      t.sizeTo(document.body);
+    });
+
+    document.getElementById('btnSaveNewBug').addEventListener('click', function() {
+      var name = document.getElementById('newBugName').value.trim();
+      if (!name) return;
+
+      var newBugPayload = {
+        action: 'addBug',
+        cardName: currentCard.name,
+        cardId: currentCard.id,
+        cardUrl: currentCard.url || '',
+        id: document.getElementById('newBugId').value.trim() || ('BUG-' + (100 + bugsData.length + 1)),
+        status: document.getElementById('newBugStatus').value,
+        name: name,
+        assignedTo: document.getElementById('newBugAssignee').value.trim(),
+        details: document.getElementById('newBugDetails').value.trim(),
+        attachments: document.getElementById('newBugAttachments').value.trim()
+      };
+
+      // Clear form
+      document.getElementById('newBugId').value = '';
+      document.getElementById('newBugName').value = '';
+      document.getElementById('newBugAssignee').value = '';
+      document.getElementById('newBugDetails').value = '';
+      document.getElementById('newBugAttachments').value = '';
+      document.getElementById('addBugForm').style.display = 'none';
+
+      if (!isConfigured()) {
+        bugsData.push(newBugPayload);
+        renderBugs();
+        return;
+      }
+
+      document.getElementById('syncStatus').textContent = 'Adding bug to sheet...';
+
+      fetch(APPS_SCRIPT_WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(newBugPayload)
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'success') {
+            bugsData = data.bugs || [];
+            if (data.sheetUrl) {
+              directTabUrl = data.sheetUrl;
+              document.getElementById('btnOpenSheet').href = directTabUrl;
+            }
+            document.getElementById('syncStatus').textContent = 'Synced (' + bugsData.length + ' issues)';
+            t.set('card', 'shared', {
+              sheetUrl: directTabUrl,
+              sheetName: data.sheetName || currentCard.name,
+              bugCount: bugsData.length
+            });
+            renderBugs();
+          }
+        });
+    });
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
   </script>
 </body>
 </html>
