@@ -2,12 +2,12 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>AllCast OS - Trello Power-Up Connector</title>
+  <title>index</title>
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
 </head>
 <body>
   <script>
-    // Paste your deployed Google Apps Script Web App URL (/exec) below:
+    // Embedded Google Apps Script Web App URL (/exec):
     var APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyay2H5NbY2mcKcQSpu6KchE2rrSl2u0MeqqH8xI73kdX1PFGzpbxIsgep7EVDr6XCc/exec';
     var SPREADSHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/1rYwDNczgDut2Wcf-42tmcBHlFjo4HN4vHexmEDJ1QSY/edit';
     var ICON_URL = 'https://cdn-icons-png.flaticon.com/512/281/281761.png';
@@ -36,30 +36,27 @@
           return gidAttachment.url;
         }
 
-        if (APPS_SCRIPT_WEB_APP_URL && APPS_SCRIPT_WEB_APP_URL.indexOf('PASTE_') === -1) {
-          var query = '?action=getBugs'
-            + '&cardName=' + encodeURIComponent(card.name)
-            + '&cardId=' + encodeURIComponent(card.id)
-            + '&cardUrl=' + encodeURIComponent(card.url || '');
-          return fetch(APPS_SCRIPT_WEB_APP_URL + query)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-              if (data && data.sheetUrl) {
-                t.set('card', 'shared', {
-                  sheetUrl: data.sheetUrl,
-                  sheetName: data.sheetName,
-                  bugCount: (data.bugs || []).length
-                });
-                return data.sheetUrl;
-              }
-              return SPREADSHEET_BASE_URL;
-            })
-            .catch(function() {
-              return SPREADSHEET_BASE_URL;
-            });
-        }
+        var query = '?action=getBugs'
+          + '&cardName=' + encodeURIComponent(card.name)
+          + '&cardId=' + encodeURIComponent(card.id)
+          + '&cardUrl=' + encodeURIComponent(card.url || '');
 
-        return SPREADSHEET_BASE_URL;
+        return fetch(APPS_SCRIPT_WEB_APP_URL + query)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data && data.sheetUrl) {
+              t.set('card', 'shared', {
+                sheetUrl: data.sheetUrl,
+                sheetName: data.sheetName,
+                bugCount: (data.bugs || []).length
+              });
+              return data.sheetUrl;
+            }
+            return SPREADSHEET_BASE_URL;
+          })
+          .catch(function() {
+            return SPREADSHEET_BASE_URL;
+          });
       });
     }
 
